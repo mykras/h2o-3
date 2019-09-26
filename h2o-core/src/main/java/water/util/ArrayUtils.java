@@ -13,6 +13,16 @@ import static water.util.RandomUtils.getRNG;
 public class ArrayUtils {
   private static final byte[] EMPTY_BYTE_ARRAY = new byte[] {};
 
+  public static int[] cumsum(final int[] from) {
+    int arryLen = from.length;
+    int[] cumsumR = new int[arryLen];
+    int result = 0;
+    for (int index = 0; index < arryLen; index++) {
+      result += result+from[index];
+      cumsumR[index] = result+from[index];
+    }
+    return cumsumR;
+  }
   // Sum elements of an array
   public static long sum(final long[] from) {
     long result = 0;

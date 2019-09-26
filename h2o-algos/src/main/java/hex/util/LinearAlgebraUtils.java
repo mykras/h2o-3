@@ -35,6 +35,20 @@ public class LinearAlgebraUtils {
     return res;
   }
 
+  public static double[] backwardSolve(double[][] L, double[] b, double[] res) {
+    assert L != null && L.length == L[0].length && L.length == b.length;
+    if (res==null)  // only allocate memory if needed
+      res = new double[b.length];
+    for (int rowIndex = b.length-1; rowIndex >= 0; rowIndex--) {
+      res[rowIndex] = b[rowIndex];
+      for (int colIndex = b.length-1; colIndex > rowIndex; colIndex--) {
+        res[rowIndex] -= L[rowIndex][colIndex]*res[colIndex];
+      }
+      res[rowIndex] /= L[rowIndex][rowIndex];
+    }
+    return res;
+  }
+
   /*
    * Impute missing values and transform numeric value x in col of dinfo._adaptedFrame
    */
@@ -276,7 +290,7 @@ public class LinearAlgebraUtils {
    * @param transpose Should result be transposed to get L?
    * @return L or R matrix from Cholesky of Y Gram
    */
-  public static double[][] computeR(Key<Job> jobKey, DataInfo yinfo, boolean transpose, double[][] xx) {
+  public static double[][] computeR(Key<Job> jobKey, DataInfo yinfo, boolean transpose) {
     // Calculate Cholesky of Y Gram to get R' = L matrix
     Gram.GramTask gtsk = new Gram.GramTask(jobKey, yinfo);  // Gram is Y'Y/n where n = nrow(Y)
     gtsk.doAll(yinfo._adaptedFrame);
@@ -295,10 +309,17 @@ public class LinearAlgebraUtils {
    * @return l2 norm of Q - W, where W is old matrix in frame, Q is computed factorization
    */
   public static double computeQ(Key<Job> jobKey, DataInfo yinfo, Frame ywfrm, double[][] xx) {
-    double[][] cholL = computeR(jobKey, yinfo, true, xx);
-    ForwardSolve qrtsk = new ForwardSolve(yinfo, cholL);
+    xx = computeR(jobKey, yinfo, true);
+    ForwardSolve qrtsk = new ForwardSolve(yinfo, xx);
     qrtsk.doAll(ywfrm);
     return qrtsk._sse;      // \sum (Q_{i,j} - W_{i,j})^2
+  }
+
+  public static double[][] computeQ(Key<Job> jobKey, DataInfo yinfo, Frame ywfrm) {
+    double[][] xx = computeR(jobKey, yinfo, true);
+    ForwardSolve qrtsk = new ForwardSolve(yinfo, xx);
+    qrtsk.doAll(ywfrm);
+    return xx;      // \sum (Q_{i,j} - W_{i,j})^2
   }
 
   /**
@@ -306,10 +327,11 @@ public class LinearAlgebraUtils {
    * @param jobKey Job key for Gram calculation
    * @param yinfo DataInfo for Y matrix
    */
-  public static void computeQInPlace(Key<Job> jobKey, DataInfo yinfo) {
-    double[][] cholL = computeR(jobKey, yinfo, true, null);
+  public static double[][] computeQInPlace(Key<Job> jobKey, DataInfo yinfo) {
+    double[][] cholL = computeR(jobKey, yinfo, true);
     ForwardSolveInPlace qrtsk = new ForwardSolveInPlace(yinfo, cholL);
     qrtsk.doAll(yinfo._adaptedFrame);
+    return cholL;
   }
 
   /**
