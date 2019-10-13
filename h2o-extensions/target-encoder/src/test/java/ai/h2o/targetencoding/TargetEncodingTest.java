@@ -1033,6 +1033,16 @@ public class TargetEncodingTest extends TestUtil {
     }
   }
 
+  
+  public static class ImputeNATestMRTask extends MRTask<ImputeNATestMRTask>{
+    @Override
+    public void map(Chunk[] cs) {
+      for (int i = 0; i < cs[0].len(); i++) {
+        cs[0].vec().factor(2);
+      }
+    }
+  }
+    
   @Test
   public void imputeNAsForColumnDistributedTest() {
     Scope.enter();
@@ -1060,14 +1070,7 @@ public class TargetEncodingTest extends TestUtil {
       Frame res = tec.imputeNAsForColumn(fr, "ColA", "ColA_NA");
       Scope.track(res);
 
-      new MRTask() {
-        @Override
-        public void map(Chunk[] cs) {
-          for (int i = 0; i < cs[0].len(); i++) {
-            cs[0].vec().factor(2);
-          }
-        }
-      }.doAll(res);
+      new ImputeNATestMRTask().doAll(res);
 
       // assumption is that domain is being properly distributed over nodes 
       // and there will be no exception while attempting to access new domain's value in `cs[0].vec().factor(2);`
