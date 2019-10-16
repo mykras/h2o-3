@@ -146,6 +146,7 @@ public class FrameTest extends TestUtil {
 
       //checking negative indices for "All but this" use case
       Frame slicedRangeExcept = input.deepSlice(new long[]{-1}, null); // <--- failing here already
+      fail("Failing test on purpose as execution is not supposed to go further then previous line"); 
       assertEquals(3, slicedRangeExcept.numRows());
       assertStringVecEquals(svec("a", "c", "d"), slicedRangeExcept.vec(0));
       assertVecEquals(vec(1, 3, 4), slicedRangeExcept.vec(1), 1e-5);
