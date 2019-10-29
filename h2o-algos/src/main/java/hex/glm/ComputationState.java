@@ -166,7 +166,9 @@ public final class ComputationState {
     _allIn = _allIn || _parms._alpha[0]*lambdaNew == 0 || _activeBC.hasBounds();
     if (!_allIn) {
       int newlySelected = 0;
-      final double rhs = Math.max(0,_alpha * (2 * lambdaNew - lambdaOld));
+      double rhs = Math.max(0,_alpha * (2 * lambdaNew - lambdaOld));
+      if (_parms._solver.equals(GLMParameters.Solver.IRLSM_NATIVE))
+        rhs = rhs*_nclasses*_dinfo.fullN();
       int [] newCols = MemoryManager.malloc4(P);
       int j = 0;
       int[] oldActiveCols = _activeData._activeCols == null ? new int[]{P} : _activeData.activeCols();
