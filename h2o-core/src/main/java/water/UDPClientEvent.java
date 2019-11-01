@@ -2,6 +2,8 @@ package water;
 
 import water.util.Log;
 
+import java.net.InetAddress;
+
 /**
  * A simple message which informs cluster about a new client
  * which was connected or about existing client who wants to disconnect.
@@ -26,12 +28,9 @@ public class UDPClientEvent extends UDP {
         // Connect event is not sent in multicast mode
         case CONNECT:
           if (H2O.isFlatfileEnabled()) {
-            Log.info("Client reported via broadcast message " + ce.clientNode + " from " + ab._h2o);
-
-            // It is important to propagate Client's HeartBeat information to the rest of the nodes
-            ce.clientNode.setHeartBeat(ce.clientHeartBeat);
-
-            H2O.addNodeToFlatfile(ce.clientNode);
+            H2ONode client = H2ONode.intern(ce.clientIp, ce.clientPort, ce.clientTimestamp);
+            Log.info("Client " + client + " reported and via broadcast message from " + ab._h2o);
+            H2O.addNodeToFlatfile(client);
           }
           break;
         // Regular disconnect event also doesn't have any effect in multicast mode.
@@ -39,9 +38,11 @@ public class UDPClientEvent extends UDP {
         case DISCONNECT:
           // handle regular disconnection
           if (H2O.isFlatfileEnabled()) {
-            Log.info("Client: " + ce.clientNode + " has been disconnected on: " + ab._h2o);
-            H2O.removeNodeFromFlatfile(ce.clientNode);
-            H2O.removeClient(ce.clientNode);
+            H2ONode client = H2ONode.intern(ce.clientIp, ce.clientPort, ce.clientTimestamp);
+
+            Log.info("Client: " + client + " has been disconnected on: " + ab._h2o);
+            H2O.removeNodeFromFlatfile(client);
+            H2O.removeClient(client);
           }
 
           // In case the disconnection comes from the watchdog client, stop the cloud ( in both multicast and flatfile mode )
@@ -75,9 +76,11 @@ public class UDPClientEvent extends UDP {
 
     // Type of client event
     public Type type;
-    public H2ONode clientNode;
-    public HeartBeat senderHeartBeat;
-    public HeartBeat clientHeartBeat;
+    InetAddress clientIp;
+    int clientPort;
+    short clientTimestamp;
+    HeartBeat senderHeartBeat;
+    HeartBeat clientHeartBeat;
 
     public ClientEvent() {
     }
@@ -85,7 +88,9 @@ public class UDPClientEvent extends UDP {
     public ClientEvent(Type type, HeartBeat senderHeartBeat, H2ONode clientNode) {
       this.type = type;
       this.senderHeartBeat = senderHeartBeat;
-      this.clientNode = clientNode;
+      this.clientIp = clientNode._key.getAddress();
+      this.clientPort = clientNode._key.htm_port();
+      this.clientTimestamp = clientNode.getTimestamp();
       this.clientHeartBeat = clientNode._heartbeat;
     }
 
