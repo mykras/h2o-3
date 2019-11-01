@@ -29,7 +29,7 @@ public class UDPClientEvent extends UDP {
         case CONNECT:
           if (H2O.isFlatfileEnabled()) {
             H2ONode client = H2ONode.intern(ce.clientIp, ce.clientPort, ce.clientTimestamp);
-            Log.info("Client " + client + " reported and via broadcast message from " + ab._h2o);
+            Log.info("Client " + client + " reported via broadcast message from " + ab._h2o);
             H2O.addNodeToFlatfile(client);
           }
           break;
@@ -40,7 +40,7 @@ public class UDPClientEvent extends UDP {
           if (H2O.isFlatfileEnabled()) {
             H2ONode client = H2ONode.intern(ce.clientIp, ce.clientPort, ce.clientTimestamp);
 
-            Log.info("Client: " + client + " has been disconnected on: " + ab._h2o);
+            Log.info("Client " + client + " has been disconnected on " + ab._h2o);
             H2O.removeNodeFromFlatfile(client);
             H2O.removeClient(client);
           }
