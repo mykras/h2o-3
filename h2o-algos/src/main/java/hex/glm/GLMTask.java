@@ -1764,13 +1764,39 @@ public abstract class GLMTask  {
       return Math.sqrt(wpsi);
     }
   }
+  
+  public static class ReturnGLMMMERunInfo extends MRTask<ReturnGLMMMERunInfo> {
+    public DataInfo _dinfo;
+    public Frame _w_prior_wpsi;
+    public Frame _augXZ;
+    Job _job;
+    double _sumDev;
+    public int _totalaugXZCol;
+
+    public ReturnGLMMMERunInfo(Job job, DataInfo datainfo, Frame wpriorwpsi, Frame augxz) {
+      _job = job;
+      _dinfo = datainfo;
+      _w_prior_wpsi = wpriorwpsi;
+      _augXZ = augxz;
+      _sumDev = 0;
+      _totalaugXZCol = augxz.numCols();
+    }
+
+    @Override
+    public void map(Chunk[] chunks) { // chunk contains infos from GLMMME run
+      long chkStarRowIdx = chunks[0].start(); // first row number of chunk
+      Chunk[] chunks4ZDev = new Chunk[3];
+      
+      Chunk[] chunksAugXZ = new Chunk[_totalaugXZCol];
+    }
+    
+  }
 
   // generate AugZ*W as a double array 
   public static class CalculateAugZW extends MRTask<CalculateAugZW> {
     GLMParameters _parms;
     public DataInfo _dinfo; // contains X and Z in response
     public int[] _random_columnsID;
-    public int[] _randCatLevels;  // categorical levels for random columns
     public int _augZID;
     public int _dataColNumber;
     public int _randColNumber;
@@ -1804,7 +1830,6 @@ public abstract class GLMTask  {
     public void map(Chunk[] chunks) {
       long chkStartIdx = chunks[0].start();           // first row number of chunks
       int chunkLen = chunks[0]._len;
-      long chkEndIdx = chkStartIdx+chunkLen-1;        // last row index of chunks
       // grab the correct chunk for AugXZ
       Chunk[] augzwChunks = new Chunk[2];
       int extraChkIdx = 0;

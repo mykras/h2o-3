@@ -806,17 +806,21 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
       }
     }
     
-    public Frame makeZeroOrOneFrame(long rowNumber, int colNumber, int val) {
+    public Frame makeZeroOrOneFrame(long rowNumber, int colNumber, int val, String[] columnNames) {
       Vec tempVec = val==0?Vec.makeZero(rowNumber):Vec.makeOne(rowNumber);
       Frame madeFrame = val==0?new Frame(tempVec.makeZeros(colNumber)):new Frame(tempVec.makeOnes(colNumber));
+      if ((columnNames != null) && (columnNames.length==colNumber))
+        madeFrame.setNames(columnNames);
+      else
+        throw new IllegalArgumentException("Column names length and number of columns in Frame differ.");
       cleanupHGLMMemory(null, null, new Vec[]{tempVec});
       return madeFrame;
     }
     
-    private void fitCoeffs(int numRandCols, int[] randCatLevels, int trainFrameColNum, int totRandCatLevels) {
+    private void fitCoeffs(int[] randCatLevels, int totRandCatLevels, Frame returnFrame) {
       Frame augXZ = makeZeroOrOneFrame(_dinfo._adaptedFrame.numRows() + ArrayUtils.sum(_randC), 
-              _state.beta().length + _state.ubeta().length, 0);
-      Frame augZW = makeZeroOrOneFrame(augXZ.numRows(), 1, 0);
+              _state.beta().length + _state.ubeta().length, 0, null);
+      Frame augZW = makeZeroOrOneFrame(augXZ.numRows(), 1, 0, new String[]{"AugZ*W"});
       int betaLength = _state.beta().length;
       int ubetaLength = _state.ubeta().length;
       double[] start_delta = MemoryManager.malloc8d(betaLength + ubetaLength);
@@ -839,8 +843,12 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
       } while (progressHGLMGLMMME(calculateAugXZ._sumEtaDiffSq, calculateAugXZ._sumEtaSq, iteration));
       if (iteration > _parms._max_iterations) 
         Log.debug(LogMsg("HGLM GLM.MME did not converge in "+iteration+" iterations."));
-      
+      collectGLMMMERunInfo(returnFrame, augXZ);
       cleanupHGLMMemory(null, new Frame[]{augXZ, augZW}, null);
+    }
+    
+    public void collectGLMMMERunInfo(Frame returnFrame, Frame augXZ) {
+      
     }
     
     public double[] calculate_all_beta(double[] start_delta, Frame augXZ, Frame augZW, int totRandCatLevels) {
@@ -897,9 +905,11 @@ public class GLM extends ModelBuilder<GLMModel,GLMParameters,GLMOutput> {
         randCatLevels[index] = _dinfo._adaptedFrame.vec(colNum).cardinality();
       }
       int totRandCatLevels = ArrayUtils.sum(randCatLevels);
+      Frame glmmmeReturnFrame = makeZeroOrOneFrame(totRandCatLevels+_dinfo._adaptedFrame.numRows(),
+              5,   0, new String[]{"AugZ", "hv", "dev", "eta.i", "resid"});
 
       do {
-        fitCoeffs(numRandCols, randCatLevels, trainFrameColNum, totRandCatLevels);  // loop to fit fixed/random coeffs
+        fitCoeffs(randCatLevels, totRandCatLevels, glmmeReturnFrame);  // loop to fit fixed/random coeffs
       
       
       } while (1==2);
