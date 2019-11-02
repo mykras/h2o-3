@@ -1,7 +1,6 @@
 package water.rapids;
 
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -15,7 +14,6 @@ import water.rapids.ast.params.AstNumList;
 import water.rapids.ast.params.AstStr;
 import water.rapids.vals.ValFrame;
 import water.rapids.vals.ValNums;
-import water.rapids.vals.ValStr;
 import water.rapids.vals.ValStrs;
 import water.runner.CloudSize;
 import water.runner.H2ORunner;
