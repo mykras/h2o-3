@@ -57,14 +57,6 @@ public class H2ORunner extends BlockJUnit4ClassRunner {
     }
 
     @Override
-    protected Statement withAfterClasses(Statement statement) {
-        List<FrameworkMethod> afters = testClass
-                .getAnnotatedMethods(AfterClass.class);
-        return afters.isEmpty() ? statement :
-                new H2ORunnerAfters(statement, afters, null);
-    }
-
-    @Override
     protected void runChild(FrameworkMethod method, RunNotifier notifier) {
         Description description = describeChild(method);
         if (isIgnored(method)) {
